@@ -1,9 +1,13 @@
+import numpy as np
 import pygame
 import random
 import os
+import numpy
 
-WIDTH = 1300
-HEIGHT = 650
+
+
+'''WIDTH = KOEF[0] * MASH
+HEIGHT = KOEF[1] * MASH'''
 FPS = 60
 
 # Задаем цвета
@@ -52,8 +56,9 @@ class Player(pygame.sprite.Sprite):
         self.fly_or_not_fly = True
 
     def update(self, collision):
-        if pygame.sprite.collide_mask(self, collision):
-            self.fly_or_not_fly = False
+        for i in collision:
+            if pygame.sprite.collide_mask(self, i):
+                self.fly_or_not_fly = False
         if self.fly_or_not_fly:
             self.movement()
 
@@ -90,16 +95,31 @@ class Obstacles(pygame.sprite.Sprite):
         self.rect.x += -1
 
 
+def draw_obs():
+    kol_obs = []
+    for i in range(KOL_OBS):
+        kol_obs.append([obstacles[i].rect.x / KOF_X, obstacles[i].rect.y / KOF_Y])
+    for i in range(KOL_OBS):
+        x = kol_obs[i][0]
+        y = kol_obs[i][1]
+        pygame.draw.circle(screen, WHITE, (x, h - kof_2 + y), 5)
+
+
 
 
 # Создаем игру и окно
 pygame.init()
 pygame.mixer.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+#window
+infoObject = pygame.display.Info()
+w = infoObject.current_w
+h = infoObject.current_h
+screen = pygame.display.set_mode((w, h))
+#screen = pygame.display.set_mode((WIDTH, HEIGHT))
 #fps
-time = pygame.time.Clock()
-pygame.display.set_caption("OVD")
 clock = pygame.time.Clock()
+#name window
+pygame.display.set_caption("OVD")
 all_sprites = pygame.sprite.Group()
 obstac_sprites = pygame.sprite.Group()
 #main samolet
@@ -107,15 +127,26 @@ main_obj = 'somalet.png'
 player = Player(load_image(main_obj, 150, 75), 300, 300)
 # препятствия
 obst = 'another_somalet.png'
-obstacles = Obstacles(load_image(obst, 200, 100), WIDTH - 300, HEIGHT - 600)
+obstacles = []
+
+KOL_OBS = 6
+for i in range(KOL_OBS):
+    a = random.randint(50, 1000)
+    b = random.randint(500, 1300)
+    obstacles.append(Obstacles(load_image(obst, 200, 100), b, a))
+
 
 #радар
 radar = 'radar.png'
 #radar_blit = load_image(radar, 200, 200)
-obj_rad = Radar(load_image(radar, 200, 200), 0, HEIGHT - 200)
+kof_1 = 300
+kof_2 = 200
+KOF_X = w / kof_1
+KOF_Y = h / kof_2
+obj_rad = Radar(load_image(radar, kof_1, kof_2), 0, h - 200)
 #all_sprites.add(player)
 
-fon = load_image('fon_sky.jpg', WIDTH, HEIGHT)
+fon = load_image('fon_sky.jpg', w, h)
 main_obj = 'somalet.png'
 
 
@@ -141,9 +172,11 @@ while running:
         obstac_sprites.update()
     # Рендеринг
     screen.blit(fon, (0, 0))
-    all_sprites.draw(screen)
     obstac_sprites.draw(screen)
-    fps(screen, time, WIDTH)
+    all_sprites.draw(screen)
+    #draw obst
+    draw_obs()
+    fps(screen, clock, w)
     #screen.blit(radar_blit, (0, HEIGHT - 200))
 
     # После отрисовки всего, переворачиваем экран
