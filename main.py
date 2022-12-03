@@ -3,9 +3,10 @@ import pygame
 import random
 import os
 
-
+#for fps
 FPS = 60
 sr_znach = [0, 0]
+
 
 # Задаем цвета
 WHITE = (255, 255, 255)
@@ -109,6 +110,18 @@ class Obstacles(pygame.sprite.Sprite):
         self.rect.x += -1
 
 
+def draw_fon():
+    global act_x
+    screen.fill(BLACK)
+    x = fon_x - act_x
+    if act_x < fon_x:
+        screen.blit(fon, (-act_x, 0), (0, 0, fon_x, fon_y))
+        screen.blit(fon, (x, 0), (0, 0, act_x, fon_y))
+    else:
+        act_x = 0
+        screen.blit(fon, (x, 0), (0, 0, fon_x, fon_y))
+
+
 def draw_obs():
     kol_obs = []
     for i in obstac_sprites:
@@ -168,8 +181,11 @@ KOF_Y = HEIGHT / kof_2_y
 obj_rad = Radar(load_image(radar, kof_1_x, kof_2_y), 0, HEIGHT - 200)
 #all_sprites.add(player)
 
-#fon
+#for fon
 fon = load_image('fon_sky.jpg', WIDTH, HEIGHT)
+fon_x = WIDTH
+fon_y = HEIGHT
+act_x = 0
 
 # Цикл игры
 running = True
@@ -193,7 +209,8 @@ while running:
         obstac_sprites.update(player.rect.x, player.rect.y)
         #obstac_sprites.update()
     # Рендеринг
-    screen.blit(fon, (0, 0))
+    draw_fon()
+    act_x += 5
     obstac_sprites.draw(screen)
     somalet_sprites.draw(screen)
     #Рисуем припятствия
