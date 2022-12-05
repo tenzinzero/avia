@@ -2,6 +2,7 @@ import numpy as np
 import pygame
 import random
 import os
+import sys
 
 #for fps
 FPS = 60
@@ -14,6 +15,11 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+
+
+def terminate():
+    pygame.quit()
+    sys.exit()
 
 def load_image(name, x, y, colorkey=None):
     fullname = os.path.join('images', name)
@@ -52,6 +58,8 @@ class Player(pygame.sprite.Sprite):
         self.speeding_up = 1
         self.speeding_down = 2'''
         self.speed = 5
+        self.x_1 = self.rect.x / KOF_X
+        self.y_1 = self.rect.y / KOF_Y
         # self.pozitsiya = self.rect.y
         # self.mask_bird = pygame.mask.from_surface(self.image2)
         self.fly_or_not_fly = True
@@ -61,21 +69,38 @@ class Player(pygame.sprite.Sprite):
             if pygame.sprite.collide_mask(self, i):
                 self.fly_or_not_fly = False
 
-        '''if self.fly_or_not_fly:
-            self.movement()'''
-
     def movement(self):
+        global speed_x, speed_y
         if self.fly_or_not_fly:
             keys = pygame.key.get_pressed()
             speed = self.speed
             if keys[pygame.K_w]:
                 self.rect.y -= speed
+                speed_y = speed
             if keys[pygame.K_a]:
                 self.rect.x -= speed
+                speed_x = -speed
             if keys[pygame.K_d]:
                 self.rect.x += speed
+                speed_x = speed
             if keys[pygame.K_s]:
                 self.rect.y += speed
+                speed_y = -speed
+
+    def draw_boy_next_door(self):
+        pygame.draw.circle(screen, GREEN, (self.x_1, HEIGHT - kof_2_y + self.y_1), 5)
+
+
+def draw_obs():
+    kol_obs = []
+    for i in obstac_sprites:
+        W_H = i.rect
+        kol_obs.append([(W_H.x + speed_x) / KOF_X, (W_H.y + speed_y) / KOF_Y])
+    for i in range(KOL_OBS):
+        x = kol_obs[i][0]
+        y = kol_obs[i][1]
+        if (x <= 0 or y >= 0) and x < kof_1_x and y < kof_2_y:
+            pygame.draw.circle(screen, WHITE, (x, HEIGHT - kof_2_y + y), 5)
 
 
 class Radar(pygame.sprite.Sprite):
@@ -107,7 +132,10 @@ class Obstacles(pygame.sprite.Sprite):
         self.rect.x += x_offset
         self.rect.y += y_offset
 
-        self.rect.x += -1
+        self.rect.x += -10
+
+        if self.rect.x + size_x < 0:
+            self.rect.x = random.randint(2000, 3000)
 
 
 def draw_fon():
@@ -122,17 +150,46 @@ def draw_fon():
         screen.blit(fon, (x, 0), (0, 0, fon_x, fon_y))
 
 
-def draw_obs():
-    kol_obs = []
-    for i in obstac_sprites:
-        W_H = i.rect
-        kol_obs.append([W_H.x / KOF_X, W_H.y / KOF_Y])
-    for i in range(KOL_OBS):
-        x = kol_obs[i][0]
-        y = kol_obs[i][1]
-        if (x <= 0 or y >= 0) and x < kof_1_x and y < kof_2_y:
-            pygame.draw.circle(screen, WHITE, (x, HEIGHT - kof_2_y + y), 5)
+def start_screen():
+    intro_text = ["ЗАСТАВКА", "",
+                  "Играть",
+                  "выход"]
 
+    fon = pygame.transform.scale(load_image('gachi_billy.jpg', WIDTH, HEIGHT), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = WIDTH // 8
+    size = []
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 30
+        intro_rect.top = text_coord
+        intro_rect.x = 100
+        text_coord += intro_rect.height
+        size.append(intro_rect)
+        screen.blit(string_rendered, intro_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                a = pygame.mouse.get_pos()
+                if size[2].x <= a[0] <= size[2].x + size[2].w and size[2].y <= a[1] <= size[2].y + size[2].h:
+                    return
+                elif size[3].x <= a[0] <= size[3].x + size[3].w and size[3].y <= a[1] <= size[3].y + size[3].h:
+                    terminate()
+
+        pygame.display.flip()
+        clock.tick(FPS)
+        '''event.type == pygame.KEYDOWN or'''
+
+
+#speed to cock or dick
+speed_x = 0
+speed_y = 0
 
 # Создаем игру и окно
 pygame.init()
@@ -154,6 +211,11 @@ pygame.display.set_caption("OVD")
 somalet_sprites = pygame.sprite.Group()
 obstac_sprites = pygame.sprite.Group()
 
+#for smail cock or dick
+kof_1_x = 300
+kof_2_y = 200
+KOF_X = WIDTH / kof_1_x
+KOF_Y = HEIGHT / kof_2_y
 #main samolet
 main_obj = 'somalet.png'
 main_somal_x = 300
@@ -163,21 +225,19 @@ player = Player(load_image(main_obj, 150, 75), main_somal_x, main_somal_y)
 # препятствия
 obst = 'another_somalet.png'
 #obstacles = []
-
-KOL_OBS = 6
+# size somalotev
+size_x = 200
+size_y = 100
+KOL_OBS = 10
 for i in range(KOL_OBS):
     a = random.randint(50, 1000)
-    b = random.randint(500, 1300)
-    obstac_sprites.add(Obstacles(load_image(obst, 200, 100), b, a))
+    b = random.randint(1200, 2500)
+    obstac_sprites.add(Obstacles(load_image(obst, size_x, size_y), b, a))
 
 
 #радар
 radar = 'radar.png'
 #radar_blit = load_image(radar, 200, 200)
-kof_1_x = 300
-kof_2_y = 200
-KOF_X = WIDTH / kof_1_x
-KOF_Y = HEIGHT / kof_2_y
 obj_rad = Radar(load_image(radar, kof_1_x, kof_2_y), 0, HEIGHT - 200)
 #all_sprites.add(player)
 
@@ -187,6 +247,8 @@ fon_x = WIDTH
 fon_y = HEIGHT
 act_x = 0
 
+# menu
+start_screen()
 # Цикл игры
 running = True
 while running:
@@ -197,6 +259,7 @@ while running:
         # check for closing window
         if event.type == pygame.QUIT:
             running = False
+            terminate()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 running = False
@@ -207,14 +270,16 @@ while running:
         #проверяем движение
         player.movement()
         obstac_sprites.update(player.rect.x, player.rect.y)
+        draw_fon()
+        act_x += 5
         #obstac_sprites.update()
     # Рендеринг
-    draw_fon()
-    act_x += 5
     obstac_sprites.draw(screen)
     somalet_sprites.draw(screen)
     #Рисуем припятствия
     draw_obs()
+    #boy next door
+    player.draw_boy_next_door()
     #Рисуем fps
     fps(screen, clock, WIDTH)
     #screen.blit(radar_blit, (0, HEIGHT - 200))
@@ -222,7 +287,4 @@ while running:
     # После отрисовки всего, переворачиваем экран
     pygame.display.flip()
     clock.tick(60)
-print(sr_znach)
-print(sr_znach[0] / sr_znach[1])
-pygame.quit()
-
+terminate()
